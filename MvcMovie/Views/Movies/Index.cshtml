@@ -27,6 +27,9 @@
             <th>
                 @Html.DisplayNameFor(model => model.Rating)
             </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Actors)
+            </th>
             <th></th>
         </tr>
     </thead>
@@ -48,6 +51,23 @@
                 </td>
                 <td>
                     @Html.DisplayFor(modelItem => item.Rating)
+                </td>
+                <td>
+                    @{if (item.Actors.Count() > 0)
+                        {
+                            
+                            foreach (var eachActor in item.Actors)
+                            {
+                               @Html.DisplayFor(modelItem => eachActor.ActorName) <br />
+                            }
+                            
+                        }
+                        else
+                        {
+                            <span>No Actor</span>
+                        } 
+                   }
+
                 </td>
                 <td>
                     @Html.ActionLink("Edit", "Edit", new { id = item.ID }) |
