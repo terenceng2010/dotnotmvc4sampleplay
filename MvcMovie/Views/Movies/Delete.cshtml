@@ -43,6 +43,26 @@
             @Html.DisplayFor(model => model.Price)
         </dd>
 
+        <dt>
+            @Html.DisplayNameFor(model => model.Actors)
+        </dt>
+
+        <dd>
+            @{if (Model.Actors.Count() > 0)
+                {
+
+                    foreach (var eachActor in Model.Actors)
+                    {
+                        @Html.DisplayFor(modelItem => eachActor.ActorName) <br />
+                    }
+
+                }
+                else
+                {
+                    <span>No Actor</span>
+                }
+            }
+        </dd>
     </dl>
 
     @using (Html.BeginForm()) {

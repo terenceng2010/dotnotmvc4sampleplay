@@ -86,6 +86,7 @@ namespace MvcMovie.Controllers
                  };
 
             CreateOrEditMovieVM model = new CreateOrEditMovieVM();
+            model.ReleaseDate = DateTime.Today;
             model.ActorList = new MultiSelectList(queryActionList.ToList(), "ID", "ActorName");
             return View(model);
         }
