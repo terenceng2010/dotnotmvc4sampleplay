@@ -7,6 +7,9 @@ using System.Net;
 using System.Web;
 using System.Web.Mvc;
 using MvcMovie.Models;
+using AutoMapper;
+using System.Data.Entity.Validation;
+using System.Diagnostics;
 
 namespace MvcMovie.Controllers
 {
@@ -69,7 +72,22 @@ namespace MvcMovie.Controllers
         // GET: Movies/Create
         public ActionResult Create()
         {
-            return View();
+            //ref: http://stackoverflow.com/questions/781987/how-can-i-get-this-asp-net-mvc-selectlist-to-work
+            //query all actors, for each of them, assign them to select list item (~ map in js)
+            List<SelectListItem> actorList = new List<SelectListItem>();
+            var queryActionList = 
+
+                 from d in db.Actors
+                 select new 
+                 {
+                     ID = d.ID,
+                     ActorName = d.ActorName,
+
+                 };
+
+            CreateMoiveVM model = new CreateMoiveVM();
+            model.ActorList = new MultiSelectList(queryActionList.ToList(), "ID","ActorName");
+            return View(model);
         }
 
         // POST: Movies/Create
@@ -77,16 +95,42 @@ namespace MvcMovie.Controllers
         // more details see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Create([Bind(Include = "ID,Title,ReleaseDate,Genre,Price,Rating")] Movie movie)
+        public ActionResult Create(CreateMoiveVM createMoiveVM)
         {
+
+            Movie newMovie = Mapper.Map<Movie>(createMoiveVM);
+            newMovie.Actors = new List<Actor>();
+
+            //http://stackoverflow.com/questions/7478570/entity-framework-code-first-adding-to-many-to-many-relationship-by-id
+            foreach (int receivedActorId in createMoiveVM.ReceviedActors)
+            {
+                var receivedActor = db.Actors.Find(receivedActorId);
+                newMovie.Actors.Add(receivedActor);
+            }
             if (ModelState.IsValid)
             {
-                db.Movies.Add(movie);
-                db.SaveChanges();
+                db.Movies.Add(newMovie);
+                try
+                {
+                    db.SaveChanges();
+                }
+                catch (DbEntityValidationException dbEx)
+                {
+                    foreach (var validationErrors in dbEx.EntityValidationErrors)
+                    {
+                        foreach (var validationError in validationErrors.ValidationErrors)
+                        {
+                            Trace.TraceInformation("Property: {0} Error: {1}",
+                                                    validationError.PropertyName,
+                                                    validationError.ErrorMessage);
+                        }
+                    }
+                }
+             
                 return RedirectToAction("Index");
             }
 
-            return View(movie);
+            return View(newMovie);
         }
 
         // GET: Movies/Edit/5
@@ -109,7 +153,7 @@ namespace MvcMovie.Controllers
         // more details see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Edit([Bind(Include = "ID,Title,ReleaseDate,Genre,Price,Rating")] Movie movie)
+        public ActionResult Edit([Bind(Include = "ID,Title,ReleaseDate,Genre,Price,Rating,Actors")] Movie movie)
         {
             if (ModelState.IsValid)
             {

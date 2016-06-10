@@ -1,4 +1,4 @@
-﻿@model MvcMovie.Models.Movie
+﻿@model MvcMovie.Models.CreateMoiveVM
 
 @{
     ViewBag.Title = "Create";
@@ -54,6 +54,14 @@
             </div>
         </div>
         <div class="form-group">
+            @Html.LabelFor(model => model.ActorList, htmlAttributes: new { @class = "control-label col-md-2" })
+            <div class="col-md-10">
+                <!--ASP.NET MVC 3 - DropDownList 的基本設定方式 -->
+                <!--http://kevintsengtw.blogspot.hk/2012/09/aspnet-mvc-3-dropdownlist.html-->
+                @Html.ListBoxFor(m => m.ReceviedActors, Model.ActorList)   
+            </div>
+        </div>
+        <div class="form-group">
             <div class="col-md-offset-2 col-md-10">
                 <input type="submit" value="Create" class="btn btn-default" />
             </div>
@@ -64,3 +72,4 @@
 <div>
     @Html.ActionLink("Back to List", "Index")
 </div>
+
