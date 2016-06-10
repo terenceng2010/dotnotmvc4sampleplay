@@ -26,8 +26,8 @@ namespace MvcMovie.Controllers
         // GET: Movies/SearchIndex?movieGenre=XXXX&searchString=XXXX
         public ActionResult SearchIndex(string movieGenre, string searchString)
         {
-            
-           
+
+
             var GenreLst = new List<string>();
             //get all genres
             var GenreQry = from d in db.Movies
@@ -75,18 +75,18 @@ namespace MvcMovie.Controllers
             //ref: http://stackoverflow.com/questions/781987/how-can-i-get-this-asp-net-mvc-selectlist-to-work
             //query all actors, for each of them, assign them to select list item (~ map in js)
             List<SelectListItem> actorList = new List<SelectListItem>();
-            var queryActionList = 
+            var queryActionList =
 
                  from d in db.Actors
-                 select new 
+                 select new
                  {
                      ID = d.ID,
                      ActorName = d.ActorName,
 
                  };
 
-            CreateMoiveVM model = new CreateMoiveVM();
-            model.ActorList = new MultiSelectList(queryActionList.ToList(), "ID","ActorName");
+            CreateOrEditMovieVM model = new CreateOrEditMovieVM();
+            model.ActorList = new MultiSelectList(queryActionList.ToList(), "ID", "ActorName");
             return View(model);
         }
 
@@ -95,7 +95,7 @@ namespace MvcMovie.Controllers
         // more details see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Create(CreateMoiveVM createMoiveVM)
+        public ActionResult Create(CreateOrEditMovieVM createMoiveVM)
         {
 
             Movie newMovie = Mapper.Map<Movie>(createMoiveVM);
@@ -126,7 +126,7 @@ namespace MvcMovie.Controllers
                         }
                     }
                 }
-             
+
                 return RedirectToAction("Index");
             }
 
@@ -140,12 +140,32 @@ namespace MvcMovie.Controllers
             {
                 return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
             }
+
             Movie movie = db.Movies.Find(id);
             if (movie == null)
             {
                 return HttpNotFound();
             }
-            return View(movie);
+
+
+            CreateOrEditMovieVM model = Mapper.Map<CreateOrEditMovieVM>(movie);
+            //model.ActorList = new MultiSelectList(movie.Actors.ToList(), "ID", "ActorName");
+            model.ReceviedActors = movie.Actors.Select(a => a.ID).ToArray();
+            List<SelectListItem> actorList = new List<SelectListItem>();
+            var queryActionList =
+
+                 from d in db.Actors
+                 select new
+                 {
+                     ID = d.ID,
+                     ActorName = d.ActorName,
+
+                 };
+
+            model.ActorList = new MultiSelectList(queryActionList.ToList(), "ID", "ActorName");
+
+
+            return View(model);
         }
 
         // POST: Movies/Edit/5
@@ -153,15 +173,34 @@ namespace MvcMovie.Controllers
         // more details see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Edit([Bind(Include = "ID,Title,ReleaseDate,Genre,Price,Rating,Actors")] Movie movie)
+        public ActionResult Edit(CreateOrEditMovieVM createMoiveVM)
         {
+            //http://stackoverflow.com/questions/9520111/entity-framework-4-not-saving-my-many-to-many-rows?lq=1
+            Movie movieToBeUpdated = Mapper.Map<Movie>(createMoiveVM);
             if (ModelState.IsValid)
             {
-                db.Entry(movie).State = EntityState.Modified;
+                // Must set to modified or adding child records does not set to modified
+                db.Entry(movieToBeUpdated).State = EntityState.Modified;
+
+                // Force loading of Actors collection due to lazy loading
+                db.Entry(movieToBeUpdated).Collection(st => st.Actors).Load();
+
+                // Clear existing Actors
+                movieToBeUpdated.Actors.Clear();
+
+                //http://stackoverflow.com/questions/7478570/entity-framework-code-first-adding-to-many-to-many-relationship-by-id
+                foreach (int receivedActorId in createMoiveVM.ReceviedActors)
+                {
+                    var receivedActor = db.Actors.Find(receivedActorId);
+                    movieToBeUpdated.Actors.Add(receivedActor);
+                }
+
+
+
                 db.SaveChanges();
                 return RedirectToAction("Index");
             }
-            return View(movie);
+            return View(movieToBeUpdated);
         }
 
         // GET: Movies/Delete/5

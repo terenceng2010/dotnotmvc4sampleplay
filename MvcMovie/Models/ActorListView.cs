@@ -6,7 +6,7 @@ using System.Web.Mvc;
 
 namespace MvcMovie.Models
 {
-    public class CreateMoiveVM
+    public class CreateOrEditMovieVM
     {
         public int ID { get; set; }
         public string Title { get; set; }
